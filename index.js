@@ -73,20 +73,21 @@ server.on("message", async (msg, info) => {
     if (!question.name.endsWith(`.${DOMAIN}`))
       return sendError(info.port, info.address, query.id, 3); // NXDOMAIN
 
-    let resolved = await lookup(question.name);
+    const answers = [];
 
-    let answers =
-      resolved !== undefined
-        ? [
-            {
-              type: "A",
-              class: "IN",
-              name: question.name,
-              ttl: TTL,
-              data: resolved,
-            },
-          ]
-        : [];
+    if (question.type === "A") {
+      let resolved = await lookup(question.name);
+
+      if (resolved !== undefined) {
+        answers.push({
+          type: "A",
+          class: "IN",
+          name: question.name,
+          ttl: TTL,
+          data: resolved,
+        });
+      }
+    }
 
     const answer = dnspacket.encode({
       type: "response",
