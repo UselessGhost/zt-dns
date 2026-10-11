@@ -32,9 +32,9 @@ async function lookup(query) {
         if (user.name && user.config.ipAssignments.length > 0)
           dnsTable[`${user.name}.${DOMAIN}`] = user.config.ipAssignments[0];
       });
-
-      lastFetch = now;
     }
+
+    lastFetch = now;
   }
 
   return dnsTable[query];
