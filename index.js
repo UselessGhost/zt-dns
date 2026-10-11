@@ -2,15 +2,16 @@ import * as dgram from "node:dgram";
 import * as dnspacket from "dns-packet";
 import assert from "node:assert";
 
-assert(process.env.NETWORK, "no network specified");
+assert(process.env.ZT_NETWORK, "no network specified");
 assert(process.env.ZT_KEY, "no api key specified");
 assert(process.env.DOMAIN, "no domain specified");
 
-const TTL = 300;
-
-const NETWORK = process.env.NETWORK;
+const ZT_NETWORK = process.env.ZT_NETWORK;
 const ZT_KEY = process.env.ZT_KEY;
 const DOMAIN = process.env.DOMAIN;
+const TTL = process.env.TTL ?? 300;
+const PORT = process.env.PORT ?? 53;
+const LISTEN = process.env.LISTEN ?? "0.0.0.0";
 
 let lastFetch = 0;
 let dnsTable = {};
@@ -18,7 +19,7 @@ let dnsTable = {};
 async function lookup(query) {
   const now = Date.now();
   if (now - lastFetch > TTL * 1000) {
-    const url = `https://api.zerotier.com/api/v1/network/${NETWORK}/member`;
+    const url = `https://api.zerotier.com/api/v1/network/${ZT_NETWORK}/member`;
     const params = { headers: { Authorization: `token ${ZT_KEY}` } };
 
     const response = await fetch(url, params);
@@ -76,7 +77,7 @@ server.on("message", async (msg, info) => {
     const answers = [];
 
     if (question.type === "A") {
-      let resolved = await lookup(question.name);
+      const resolved = await lookup(question.name);
 
       if (resolved !== undefined) {
         answers.push({
@@ -109,4 +110,4 @@ server.on("listening", () => {
   console.log(`Server listening on ${address.address}:${address.port}`);
 });
 
-server.bind(53, "0.0.0.0");
+server.bind(PORT, LISTEN);
