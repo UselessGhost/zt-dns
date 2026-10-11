@@ -93,7 +93,7 @@ server.on("message", async (msg, info) => {
     const answer = dnspacket.encode({
       type: "response",
       id: query.id,
-      flags: 0,
+      flags: dnspacket.AUTHORITATIVE_ANSWER,
       questions: query.questions,
       answers: answers,
     });
