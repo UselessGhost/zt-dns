@@ -15,6 +15,7 @@ const LISTEN = process.env.LISTEN ?? "0.0.0.0";
 
 let lastFetch = 0;
 let dnsTable = {};
+let allowedIPs = {};
 
 async function lookup(query) {
   const now = Date.now();
@@ -27,11 +28,17 @@ async function lookup(query) {
     if (response.ok) {
       const data = await response.json();
 
+      allowedIPs = {};
       dnsTable = {};
 
       data.forEach((user) => {
-        if (user.name && user.config.ipAssignments.length > 0)
+        if (user.name && user.config.ipAssignments.length > 0) {
           dnsTable[`${user.name}.${DOMAIN}`] = user.config.ipAssignments[0];
+          allowedIPs[ user.config.ipAssignments[0] ] = true;
+        }
+
+        if (user.physicalAddress)
+          allowedIPs[ user.physicalAddress ] = true;
       });
     }
 
@@ -79,7 +86,7 @@ server.on("message", async (msg, info) => {
     if (question.type === "A") {
       const resolved = await lookup(question.name);
 
-      if (resolved !== undefined) {
+      if (resolved !== undefined && allowedIPs[ info.address ]) {
         answers.push({
           type: "A",
           class: "IN",
